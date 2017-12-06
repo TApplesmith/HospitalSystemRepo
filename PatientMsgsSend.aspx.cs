@@ -11,10 +11,12 @@ public partial class EWork_PatientMsgsSend : System.Web.UI.Page
     HospitalSystemDatabaseEntities dbcon = new HospitalSystemDatabaseEntities();
     protected void Page_Load(object sender, EventArgs e)
     {
-        ListBox1.Visible = true;
-        resetDropDown();
-
         if (IsPostBack != true)
+        {
+            ListBox1.Visible = true;
+            resetDropDown();
+        }
+        else
         {
 
         }
@@ -124,7 +126,17 @@ public partial class EWork_PatientMsgsSend : System.Web.UI.Page
 
     protected void SendButton_Click(object sender, EventArgs e)
     {
+        //get currently selected value of dropdown, the name of the person sending to
+        string dropDown = DropDownList1.SelectedItem.Value;
+        ListBox1.Items.Add(dropDown);
+
+        //determines type of user: Doctor/Patient
+        string userType = Session["UserType"].ToString();
+        //determines current username
+        string userName = Session["Username"].ToString();    
+
         //testing with listbox
+        /*
         ListBox1.Items.Add(new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day).ToString());
         ListBox1.Items.Add(new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second).ToString());
         ListBox1.Items.Add(MsgText.Text);
@@ -133,12 +145,35 @@ public partial class EWork_PatientMsgsSend : System.Web.UI.Page
         ListBox1.Items.Add(Session["Username"].ToString());
         ListBox1.Items.Add(Convert.ToInt32(Session["DoctorID"]).ToString());
         ListBox1.Items.Add(Convert.ToInt32(Session["PatientID"]).ToString());
+        */
 
         EmailTable myEmail = new EmailTable();
 
         myEmail.EmailDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
         myEmail.EmailTime = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
         myEmail.EmailText = MsgText.Text;
+
+        //DoctorUserName, DoctorID, PatientUserName, PatientID
+        myEmail.Sender = userName;
+
+        if(userType.Equals("Patient"))
+        {
+            myEmail.PatientUserName = userName;
+            myEmail.PatientId = getPatientIDFromUsername(userName);
+
+            myEmail.DoctorUserName = getDoctorUsernameFromName(dropDown);
+            myEmail.DoctorId = getDoctorIDFromName(dropDown);
+        }
+        else if (userType.Equals("Doctor"))
+        {
+            myEmail.DoctorUserName = userName;
+            myEmail.DoctorId = getDoctorIDFromUsername(userName);
+
+            myEmail.PatientUserName = getPatientUsernameFromName(dropDown);
+            myEmail.PatientId = getPatientIDFromName(dropDown);
+        }
+
+        /*
         myEmail.DoctorId = Convert.ToInt32(Session["DoctorID"]);
         myEmail.PatientId = Convert.ToInt32(Session["PatientID"]);
 
@@ -157,10 +192,49 @@ public partial class EWork_PatientMsgsSend : System.Web.UI.Page
         myEmail.DoctorUserName = Session["DoctorUsername"].ToString();
         myEmail.PatientUserName = Session["Username"].ToString();
         myEmail.Sender = Session["Username"].ToString();
+        */
+        try
+        {
+            dbcon.EmailTables.Add(myEmail);
+            dbcon.SaveChanges();
 
-        dbcon.EmailTables.Add(myEmail);
-        dbcon.SaveChanges();
+            Response.Redirect("PatientMsgsConfirm.aspx");
+        }
+        catch
+        {
+            ClientScript.RegisterStartupScript(this.GetType(), "myalert", "alert('" + "myStringVariable" + "');", true);
+        }
 
         // Response.Redirect("PatientMsgsConfirm.aspx");
+    }
+
+    public int getPatientIDFromUsername(string userName)
+    {
+        return dbcon.PatientTables.Where(per => per.PatientUserName.Equals(userName)).First().PatientId;
+    }
+
+    public int getDoctorIDFromUsername(string userName)
+    {
+        return dbcon.DoctorTables.Where(per => per.DoctorUserName.Equals(userName)).First().DoctorId;
+    }
+
+    public string getPatientUsernameFromName(string name)
+    {
+        return dbcon.PatientTables.Where(per => per.Name.Equals(name)).First().PatientUserName;
+    }
+
+    public string getDoctorUsernameFromName(string name)
+    {
+        return dbcon.DoctorTables.Where(per => per.Name.Equals(name)).First().DoctorUserName;
+    }
+
+    public int getPatientIDFromName(string name)
+    {
+        return dbcon.PatientTables.Where(per => per.Name.Equals(name)).First().PatientId;
+    }
+
+    public int getDoctorIDFromName(string name)
+    {
+        return dbcon.DoctorTables.Where(per => per.Name.Equals(name)).First().DoctorId;
     }
 }

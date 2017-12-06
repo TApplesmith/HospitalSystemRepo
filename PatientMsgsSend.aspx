@@ -13,14 +13,14 @@
     </p>
     <p>
         To:
-        <asp:DropDownList ID="DropDownList1" runat="server">
+        <asp:DropDownList ID="DropDownList1" runat="server" AutoPostBack="True">
         </asp:DropDownList>
     </p>
     <p>
         <asp:TextBox ID="MsgText" runat="server"></asp:TextBox>
     </p>
     <p>
-        <asp:Button ID="SendButton" runat="server" OnClick="SendButton_Click" Text="Send" />
+        <asp:Button ID="SendButton" runat="server" OnClick="SendButton_Click" Text="Send"/>
     </p>
     <p>
         <asp:ListBox ID="ListBox1" runat="server"></asp:ListBox>
